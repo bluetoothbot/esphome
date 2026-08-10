@@ -586,8 +586,7 @@ void BluetoothProxy::loop() {
     }
     const uint64_t owed = this->pending_disconnections_[i];
     if ((owed & PENDING_ADDRESS_MASK) != 0 &&
-        this->send_device_connection(owed & PENDING_ADDRESS_MASK, false, 0,
-                                     static_cast<int16_t>(owed >> 48))) {
+        this->send_device_connection(owed & PENDING_ADDRESS_MASK, false, 0, static_cast<int16_t>(owed >> 48))) {
       this->pending_disconnections_[i] = 0;
     }
   }
