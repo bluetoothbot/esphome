@@ -8,6 +8,7 @@
 #include "esphome/core/string_ref.h"
 #include <concepts>
 #include <functional>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -493,6 +494,13 @@ template<typename... X> class TemplatableValue<std::string, X...> {
     const char *static_str_;               // For STATIC_STRING and FLASH_STRING types
   };
 };
+
+/// How an action that waits (wait_until, script.wait) keeps a trigger argument until it resumes. A reference
+/// usually points at data that is gone once the trigger returns, so a copy is kept. An object that cannot be
+/// copied, such as the entity passed as `Climate &`, outlives the wait and is kept by reference.
+template<typename T>
+using stored_arg_t =
+    std::conditional_t<std::is_copy_constructible_v<std::remove_cvref_t<T>>, std::remove_cvref_t<T>, T>;
 
 /** Base class for all automation conditions.
  *

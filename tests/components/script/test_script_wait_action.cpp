@@ -39,4 +39,34 @@ TEST(ScriptWaitActionTest, KeepsCopyOfReferenceArguments) {
   EXPECT_EQ(record.seen, "argument longer than the small string buffer");
 }
 
+class Entity {
+ public:
+  Entity() = default;
+  Entity(const Entity &) = delete;
+  Entity &operator=(const Entity &) = delete;
+};
+
+class EntityAction : public Action<Entity &> {
+ public:
+  void play(Entity &entity) override { this->seen = &entity; }
+  Entity *seen{nullptr};
+};
+
+// An object that cannot be copied, such as the entity passed as `Climate &`, is kept by reference
+TEST(ScriptWaitActionTest, KeepsReferenceToNonCopyableArguments) {
+  FakeScript script;
+  ScriptWaitAction<FakeScript, Entity &> wait(&script);
+  EntityAction record;
+  ActionList<Entity &> actions;
+  actions.add_actions({&wait, &record});
+
+  Entity entity;
+  actions.play(entity);
+  EXPECT_EQ(record.seen, nullptr);
+
+  script.running = false;
+  wait.loop();
+  EXPECT_EQ(record.seen, &entity);
+}
+
 }  // namespace esphome::script::testing

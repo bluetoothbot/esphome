@@ -324,9 +324,7 @@ template<class C, typename... Ts> class ScriptWaitAction final : public Action<T
   }
 
  protected:
-  // Store copies, not references: trigger arguments such as `const T &` refer to data that is gone once the
-  // trigger returns
-  using ArgsTuple = std::tuple<std::remove_cvref_t<Ts>...>;
+  using ArgsTuple = std::tuple<stored_arg_t<Ts>...>;
 
   template<size_t... S> void play_next_tuple_(ArgsTuple &tuple, std::index_sequence<S...> /*unused*/) {
     this->play_next_(std::get<S>(tuple)...);

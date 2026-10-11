@@ -71,4 +71,40 @@ TEST(WaitUntilActionTest, AcceptsMutableReferenceArguments) {
   EXPECT_EQ(increment.seen, 1);
 }
 
+class Entity {
+ public:
+  Entity() = default;
+  Entity(const Entity &) = delete;
+  Entity &operator=(const Entity &) = delete;
+};
+
+class EntityCondition : public Condition<Entity &> {
+ public:
+  bool check(Entity & /*entity*/) override { return this->ready; }
+  bool ready{false};
+};
+
+class EntityAction : public Action<Entity &> {
+ public:
+  void play(Entity &entity) override { this->seen = &entity; }
+  Entity *seen{nullptr};
+};
+
+// An object that cannot be copied, such as the entity passed as `Climate &`, is kept by reference
+TEST(WaitUntilActionTest, KeepsReferenceToNonCopyableArguments) {
+  EntityCondition condition;
+  WaitUntilAction<Entity &> wait(&condition);
+  EntityAction record;
+  ActionList<Entity &> actions;
+  actions.add_actions({&wait, &record});
+
+  Entity entity;
+  actions.play(entity);
+  EXPECT_EQ(record.seen, nullptr);
+
+  condition.ready = true;
+  wait.loop();
+  EXPECT_EQ(record.seen, &entity);
+}
+
 }  // namespace esphome::testing
