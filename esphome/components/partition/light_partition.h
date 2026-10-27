@@ -69,21 +69,10 @@ class PartitionLightOutput final : public light::AddressableLight {
       return this->parent_->get_color_correction_(color_view)->color_uncorrect(color_view.get_raw());
     }
     Color get_raw(int32_t index) const override { return this->parent_->get_color_view_(index).get_raw(); }
-    uint8_t get_red(int32_t index) const override {
+    uint8_t get_channel(int32_t index, uint8_t channel) const override {
       light::ESPColorView color_view = this->parent_->get_color_view_(index);
-      return this->parent_->get_color_correction_(color_view)->color_uncorrect_red(color_view.get_raw().red);
-    }
-    uint8_t get_green(int32_t index) const override {
-      light::ESPColorView color_view = this->parent_->get_color_view_(index);
-      return this->parent_->get_color_correction_(color_view)->color_uncorrect_green(color_view.get_raw().green);
-    }
-    uint8_t get_blue(int32_t index) const override {
-      light::ESPColorView color_view = this->parent_->get_color_view_(index);
-      return this->parent_->get_color_correction_(color_view)->color_uncorrect_blue(color_view.get_raw().blue);
-    }
-    uint8_t get_white(int32_t index) const override {
-      light::ESPColorView color_view = this->parent_->get_color_view_(index);
-      return this->parent_->get_color_correction_(color_view)->color_uncorrect_white(color_view.get_raw().white);
+      return this->parent_->get_color_correction_(color_view)
+          ->color_uncorrect_channel(color_view.get_raw()[channel], channel);
     }
     uint8_t get_effect_data(int32_t index) const override {
       return this->parent_->get_color_view_(index).get_effect_data();
@@ -94,28 +83,10 @@ class PartitionLightOutput final : public light::AddressableLight {
       color_view.set_raw(this->parent_->get_color_correction_(color_view)->color_correct(color));
     }
     void set_raw(int32_t index, Color raw_color) override { this->parent_->get_color_view_(index).set_raw(raw_color); }
-    void set_red(int32_t index, uint8_t red) override {
+    void set_channel(int32_t index, uint8_t channel, uint8_t value) override {
       light::ESPColorView color_view = this->parent_->get_color_view_(index);
       Color raw_color = color_view.get_raw();
-      raw_color.red = this->parent_->get_color_correction_(color_view)->color_correct_red(red);
-      color_view.set_raw(raw_color);
-    }
-    void set_green(int32_t index, uint8_t green) override {
-      light::ESPColorView color_view = this->parent_->get_color_view_(index);
-      Color raw_color = color_view.get_raw();
-      raw_color.green = this->parent_->get_color_correction_(color_view)->color_correct_green(green);
-      color_view.set_raw(raw_color);
-    }
-    void set_blue(int32_t index, uint8_t blue) override {
-      light::ESPColorView color_view = this->parent_->get_color_view_(index);
-      Color raw_color = color_view.get_raw();
-      raw_color.blue = this->parent_->get_color_correction_(color_view)->color_correct_blue(blue);
-      color_view.set_raw(raw_color);
-    }
-    void set_white(int32_t index, uint8_t white) override {
-      light::ESPColorView color_view = this->parent_->get_color_view_(index);
-      Color raw_color = color_view.get_raw();
-      raw_color.white = this->parent_->get_color_correction_(color_view)->color_correct_white(white);
+      raw_color[channel] = this->parent_->get_color_correction_(color_view)->color_correct_channel(value, channel);
       color_view.set_raw(raw_color);
     }
     void set_effect_data(int32_t index, uint8_t value) override {

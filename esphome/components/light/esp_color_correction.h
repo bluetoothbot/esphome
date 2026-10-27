@@ -39,11 +39,7 @@ class ESPColorCorrection {
   uint8_t get_power_brightness() const { return this->power_brightness_; }
 #endif
   void set_gamma_table(const uint16_t *table) { this->gamma_table_ = table; }
-  inline Color color_correct(Color color) const ESPHOME_ALWAYS_INLINE {
-    // corrected = (uncorrected * max_brightness * local_brightness) ^ gamma
-    return Color(this->color_correct_red(color.red), this->color_correct_green(color.green),
-                 this->color_correct_blue(color.blue), this->color_correct_white(color.white));
-  }
+  Color color_correct(Color color) const;
   inline uint8_t color_correct_red(uint8_t red) const ESPHOME_ALWAYS_INLINE {
     return this->color_correct_channel_(red, this->max_brightness_.red);
   }
@@ -55,6 +51,11 @@ class ESPColorCorrection {
   }
   inline uint8_t color_correct_white(uint8_t white) const ESPHOME_ALWAYS_INLINE {
     return this->color_correct_channel_(white, this->max_brightness_.white);
+  }
+  /// Correct one channel, where channel 0 is red, 1 green, 2 blue and 3 white.
+  uint8_t color_correct_channel(uint8_t value, uint8_t channel) const;
+  inline uint8_t color_uncorrect_channel(uint8_t value, uint8_t channel) const ESPHOME_ALWAYS_INLINE {
+    return this->color_uncorrect_channel_(value, this->max_brightness_[channel]);
   }
   Color color_uncorrect(Color color) const;
   inline uint8_t color_uncorrect_red(uint8_t red) const ESPHOME_ALWAYS_INLINE {

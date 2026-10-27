@@ -46,6 +46,19 @@ struct ChannelColors {
     return this->has_white() ? color_data[index * 4 + this->w] : 0;
   }
 
+  /// Get one channel, where channel 0 is red, 1 green, 2 blue and 3 white.
+  uint8_t get_channel(const uint8_t *color_data, int32_t index, uint8_t channel) const {
+    const uint8_t pos = this->offset(channel);
+    if (pos & 0x80)
+      return 0;
+    return color_data[index * this->bytes_per_led() + pos];
+  }
+  void set_channel(uint8_t *color_data, int32_t index, uint8_t channel, uint8_t value) const {
+    const uint8_t pos = this->offset(channel);
+    if ((pos & 0x80) == 0)
+      color_data[index * this->bytes_per_led() + pos] = value;
+  }
+
   void set(uint8_t *color_data, int32_t index, Color color) const {
     if (this->w == NO_WHITE) {
       color_data[index * 3 + this->r] = color.red;
@@ -87,6 +100,20 @@ struct ChannelColors {
     }
     buf[this->bytes_per_led()] = '\0';
     return buf;
+  }
+
+  /// Byte position of a channel, where channel 0 is red, 1 green, 2 blue and 3 white.
+  uint8_t offset(uint8_t channel) const {
+    switch (channel) {
+      case 0:
+        return this->r;
+      case 1:
+        return this->g;
+      case 2:
+        return this->b;
+      default:
+        return this->w;
+    }
   }
 
   /// Colour modes of a strip with this channel order.

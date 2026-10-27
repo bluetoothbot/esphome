@@ -26,6 +26,17 @@ uint8_t ESPColorCorrection::gamma_uncorrect_(uint8_t value) const {
   return (target - a <= b - target) ? lo : lo + 1;
 }
 
+Color ESPColorCorrection::color_correct(Color color) const {
+  // corrected = (uncorrected * max_brightness * local_brightness) ^ gamma
+  for (uint8_t channel = 0; channel < 4; channel++)
+    color[channel] = this->color_correct_channel(color[channel], channel);
+  return color;
+}
+
+uint8_t ESPColorCorrection::color_correct_channel(uint8_t value, uint8_t channel) const {
+  return this->color_correct_channel_(value, this->max_brightness_[channel]);
+}
+
 Color ESPColorCorrection::color_uncorrect(Color color) const {
   // uncorrected = corrected^(1/gamma) / (max_brightness * local_brightness)
   return Color(this->color_uncorrect_red(color.red), this->color_uncorrect_green(color.green),
