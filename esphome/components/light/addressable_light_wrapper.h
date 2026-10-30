@@ -114,10 +114,11 @@ class AddressableLightWrapper : public light::AddressableLight {
   }
 
  protected:
-  light::LightState *light_state_;
-  CorrectedBufferColorAccessor wrapper_accessor_;
+  // Small members first so they fill the tail padding of AddressableLight
   uint8_t wrapper_state_[5]{};
   ColorMode color_mode_{ColorMode::UNKNOWN};
+  light::LightState *light_state_;
+  CorrectedBufferColorAccessor wrapper_accessor_;
 };
 
 }  // namespace esphome::light
