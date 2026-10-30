@@ -8,16 +8,16 @@ constexpr size_t COLOR_DATA_OFFSET = 5;
 SpiLedStrip::SpiLedStrip(uint16_t num_leds) {
   this->num_leds_ = num_leds;
   RAMAllocator<uint8_t> allocator;
-  this->buffer_size_ = num_leds * 4 + 8;
-  uint8_t *buf = allocator.allocate(this->buffer_size_ + num_leds);
+  const size_t buffer_size = this->get_buffer_size_();
+  uint8_t *buf = allocator.allocate(buffer_size + num_leds);
   if (buf == nullptr) {
-    ESP_LOGE(TAG, "Failed to allocate buffer of size %u", this->buffer_size_ + num_leds);
+    ESP_LOGE(TAG, "Failed to allocate buffer of size %u", buffer_size + num_leds);
     return;
   }
-  memset(buf, 0xFF, this->buffer_size_);
+  memset(buf, 0xFF, buffer_size);
   memset(buf, 0, 4);
   this->internal_accessor_.color_data = buf + COLOR_DATA_OFFSET;
-  this->internal_accessor_.effect_data = buf + this->buffer_size_;
+  this->internal_accessor_.effect_data = buf + buffer_size;
   memset(this->internal_accessor_.effect_data, 0, num_leds);
   this->accessor_ = &this->internal_accessor_;
 }
@@ -48,16 +48,17 @@ void SpiLedStrip::write_state(light::LightState *state) {
   if (this->is_failed())
     return;
   uint8_t *buffer = this->internal_accessor_.color_data - COLOR_DATA_OFFSET;
+  const size_t buffer_size = this->get_buffer_size_();
 #if ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE
   {
     char strbuf[49];  // format_hex_pretty_size(16) = 48, fits 16 bytes
-    size_t len = std::min(this->buffer_size_, (size_t) 16);
+    size_t len = std::min(buffer_size, (size_t) 16);
     format_hex_pretty_to(strbuf, sizeof(strbuf), buffer, len, ' ');
     esph_log_v(TAG, "write_state: buf = %s", strbuf);
   }
 #endif
   this->enable();
-  this->write_array(buffer, this->buffer_size_);
+  this->write_array(buffer, buffer_size);
   this->disable();
 }
 }  // namespace esphome::spi_led_strip

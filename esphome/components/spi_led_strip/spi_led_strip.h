@@ -29,9 +29,11 @@ class SpiLedStrip final : public light::AddressableLight,
   }
 
  protected:
+  // Start frame, one 4-byte frame per LED, and the end frame
+  size_t get_buffer_size_() const { return this->num_leds_ * 4 + 8; }
+
   light::CorrectedBufferColorAccessor internal_accessor_{
       nullptr, nullptr, {2, 1, 0, light::ChannelColors::RESERVED_WHITE}, &this->correction_};
-  size_t buffer_size_{};
   uint16_t num_leds_;
 };
 
