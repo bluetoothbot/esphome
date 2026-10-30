@@ -95,14 +95,16 @@ void ESP32RMTLEDStripLightOutput::setup() {
 #endif
 
   const uint32_t resolution_hz = rmt_resolution_hz();
-  // Longest wire time of one frame; write_state() defers instead of blocking until it has elapsed
+  // Longest wire time of one frame; write_state() defers instead of blocking until it has elapsed,
+  // so it is also the lowest usable refresh interval
   uint32_t bit_ticks = std::max(this->params_.bit0.duration0 + this->params_.bit0.duration1,
                                 this->params_.bit1.duration0 + this->params_.bit1.duration1);
   uint64_t frame_ticks = (uint64_t) bit_ticks * buffer_size * RMT_SYMBOLS_PER_BYTE + this->params_.reset.duration0 +
                          this->params_.reset.duration1;
-  this->frame_time_us_ = frame_ticks * 1000000 / resolution_hz + RESET_GAP_US;
+  const uint32_t frame_time_us = frame_ticks * 1000000 / resolution_hz + RESET_GAP_US;
+  this->max_refresh_rate_ = std::max(frame_time_us, this->max_refresh_rate_);
   // Seed with the interval write_state() gates on, so the first frame is not deferred
-  this->last_refresh_ = micros() - std::max(this->frame_time_us_, this->max_refresh_rate_);
+  this->last_refresh_ = micros() - this->max_refresh_rate_;
 
   rmt_tx_channel_config_t channel;
   memset(&channel, 0, sizeof(channel));
@@ -173,7 +175,7 @@ void ESP32RMTLEDStripLightOutput::set_led_params(uint32_t bit0_high, uint32_t bi
 
 void ESP32RMTLEDStripLightOutput::write_state(light::LightState *state) {
   // Previous frame still on the wire, inside its reset gap, or refreshing too often: try again next loop
-  if (this->throttle_show_(micros(), this->last_refresh_, std::max(this->frame_time_us_, this->max_refresh_rate_)))
+  if (this->throttle_show_(micros(), this->last_refresh_, this->max_refresh_rate_))
     return;
 
   // The gate above should always cover the previous frame; never overwrite rmt_buf_ while the RMT still reads it
