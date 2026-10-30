@@ -25,6 +25,9 @@ PartitionLightOutput = partitions_ns.class_(
     "PartitionLightOutput", light.AddressableLight
 )
 
+# AddressableSegment keeps its offsets and lengths in 16 bits
+MAX_PARTITION_LEDS = 65535
+
 
 def validate_from_to(value: ConfigType) -> ConfigType:
     if CONF_ID in value and value[CONF_FROM] > value[CONF_TO]:
@@ -32,6 +35,17 @@ def validate_from_to(value: ConfigType) -> ConfigType:
             f"From ({value[CONF_FROM]}) must not be larger than to ({value[CONF_TO]})"
         )
     return value
+
+
+def validate_total_length(segments: list[ConfigType]) -> list[ConfigType]:
+    total = sum(
+        seg[CONF_TO] - seg[CONF_FROM] + 1 if CONF_ID in seg else 1 for seg in segments
+    )
+    if total > MAX_PARTITION_LEDS:
+        raise cv.Invalid(
+            f"The segments cover {total} LEDs, a partition can have at most {MAX_PARTITION_LEDS}"
+        )
+    return segments
 
 
 def validate_segment(config: ConfigType) -> None:
@@ -55,8 +69,8 @@ def validate_segment(config: ConfigType) -> None:
 ADDRESSABLE_SEGMENT_SCHEMA = cv.Schema(
     {
         cv.Required(CONF_ID): cv.use_id(light.AddressableLightState),
-        cv.Required(CONF_FROM): cv.positive_int,
-        cv.Required(CONF_TO): cv.positive_int,
+        cv.Required(CONF_FROM): cv.uint16_t,
+        cv.Required(CONF_TO): cv.uint16_t,
         cv.Optional(CONF_REVERSED, default=False): cv.boolean,
     }
 )
@@ -80,6 +94,7 @@ CONFIG_SCHEMA = light.ADDRESSABLE_LIGHT_SCHEMA.extend(
                 validate_from_to,
             ),
             cv.Length(min=1),
+            validate_total_length,
         ),
         cv.Optional(light.CONF_POWER_ESTIMATION): cv.invalid(
             "power_estimation belongs on the strip a partition draws from; "
