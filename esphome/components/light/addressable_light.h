@@ -153,7 +153,6 @@ class AddressableLight : public LightOutput, public Component {
 #endif
 
   ESPColorAccessor *accessor_{&NullColorAccessor::instance};
-  ESPColorCorrection correction_{};
   LightState *state_parent_{nullptr};
 #ifdef USE_LIGHT_POWER_ESTIMATION
   PowerEstimation *power_estimation_{nullptr};
@@ -161,6 +160,8 @@ class AddressableLight : public LightOutput, public Component {
 #ifdef USE_POWER_SUPPLY
   power_supply::PowerSupplyRequester power_;
 #endif
+  // Last and overlappable so effect_active_ and a subclass's small members can use its tail padding
+  [[no_unique_address]] ESPColorCorrection correction_{};
   bool effect_active_{false};
 };
 
